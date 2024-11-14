@@ -53,7 +53,7 @@ pub struct RegisterInfo {
 fn get_ip_address() -> Result<String> {
     let addrs = get_if_addrs()?;
     for addr in addrs {
-        if !addr.is_loopback() {
+        if !addr.is_loopback() && addr.ip().is_ipv4() {
             return Ok(addr.ip().to_string());
         }
     }

@@ -81,3 +81,17 @@ cargo nextest 是一个 Rust 增强测试工具。
 ```bash
 cargo install cargo-nextest --locked
 ```
+
+### 交叉编译命令
+
+在 mac 上为 rustup 安装 windows 的编译工具链
+
+```bash
+rustup target add x86_64-pc-windows-gnu
+```
+
+在 mac 编译为 windows 可执行文件
+
+```bash
+cargo build --target x86_64-pc-windows-gnu
+```

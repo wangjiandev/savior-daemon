@@ -4,7 +4,7 @@ use crate::{
 };
 use anyhow::Result;
 use if_addrs::get_if_addrs;
-use redis::Commands;
+use redis::{Commands, RedisError};
 use serde::{Deserialize, Serialize};
 use std::{sync::Arc, thread, time::Duration};
 
@@ -22,17 +22,25 @@ pub fn register_process(state: &impl AppState) -> Result<thread::JoinHandle<Resu
     let handle = thread::spawn(move || -> Result<()> {
         loop {
             let config = GlobalConfig::try_load()?;
+            let ip = get_ip_address().unwrap_or("0.0.0.0".to_string());
             let register_info = RegisterInfo {
                 id: config.client_id.clone(),
                 name: config.client_name.clone(),
-                ip: get_ip_address()?,
+                ip,
             };
             let conn = client.get_connection();
             match conn {
                 Ok(mut conn) => {
                     let json = serde_json::to_string(&register_info)?;
-                    let _: () = conn.publish(CHANNEL_REGISTER, json)?;
-                    println!("register info: {:?}", register_info);
+                    let ret: Result<(), RedisError> = conn.publish(CHANNEL_REGISTER, json);
+                    match ret {
+                        Ok(()) => {
+                            println!("register success: {:?}", register_info);
+                        }
+                        Err(e) => {
+                            println!("connection publish error: {:?}", e);
+                        }
+                    }
                 }
                 Err(e) => {
                     println!("redis connection error: {:?}", e);

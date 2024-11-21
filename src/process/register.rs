@@ -18,10 +18,10 @@ use std::{sync::Arc, thread, time::Duration};
 ///
 ///
 pub fn register_process(state: &impl AppState) -> Result<thread::JoinHandle<Result<()>>> {
-    let config = GlobalConfig::try_load()?;
     let client = Arc::clone(state.client());
     let handle = thread::spawn(move || -> Result<()> {
         loop {
+            let config = GlobalConfig::try_load()?;
             let register_info = RegisterInfo {
                 id: config.client_id.clone(),
                 name: config.client_name.clone(),
@@ -32,6 +32,7 @@ pub fn register_process(state: &impl AppState) -> Result<thread::JoinHandle<Resu
                 Ok(mut conn) => {
                     let json = serde_json::to_string(&register_info)?;
                     let _: () = conn.publish(CHANNEL_REGISTER, json)?;
+                    println!("register info: {:?}", register_info);
                 }
                 Err(e) => {
                     println!("redis connection error: {:?}", e);

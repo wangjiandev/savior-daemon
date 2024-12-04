@@ -9,6 +9,7 @@ pub trait AppState {
 #[derive(Debug)]
 pub struct Ctx {
     pub client: Arc<Client>,
+    pub config: GlobalConfig,
 }
 
 impl Ctx {
@@ -19,6 +20,7 @@ impl Ctx {
         let client = Client::open(redis_conn_url).expect("redis client open error");
         Ctx {
             client: Arc::new(client),
+            config,
         }
     }
 }

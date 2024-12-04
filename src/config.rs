@@ -1,5 +1,6 @@
 use crate::store::local_file_db::{read_json_file, write_json_file};
 use anyhow::Result;
+use platform_dirs::AppDirs;
 use serde::{Deserialize, Serialize};
 use serde_json::from_value;
 use std::{env, path::PathBuf};
@@ -32,15 +33,15 @@ impl GlobalConfig {
     /// - SAVIOR_FEP_ADDRESS: The address of the fep server. default is "192.168.1.124:6379".
     /// - SAVIOR_FILE_PATH: The path of the file storage. default is "/data/savior".
     pub fn try_load() -> Result<Self> {
-        let savior_file_path = env::var("SAVIOR_FILE_PATH")?;
-        let settings_path = PathBuf::from(&savior_file_path).join("settings.json");
+        let savior_file_path = get_app_data_dir()?;
+        let settings_path = savior_file_path.join("settings.json");
         if let Ok(data) = read_json_file(&settings_path) {
             from_value::<GlobalConfig>(data)
                 .map_err(|_| anyhow::anyhow!("读取配置settings.json文件失败"))
         } else {
             let id = Uuid::new_v4();
             let config = GlobalConfig {
-                root_home: savior_file_path,
+                root_home: savior_file_path.display().to_string(),
                 code: env::var("SAVIOR_ORG_CODE").unwrap_or_default(),
                 name: env::var("SAVIOR_ORG_NAME").unwrap_or_default(),
                 place: env::var("SAVIOR_ORG_PLACE").unwrap_or_default(),
@@ -59,4 +60,10 @@ impl GlobalConfig {
         write_json_file(&settings_path, &json_value)?;
         Ok(())
     }
+}
+
+fn get_app_data_dir() -> Result<PathBuf> {
+    let app_dirs = AppDirs::new(Some("Savior"), false).unwrap();
+    let home = app_dirs.data_dir;
+    Ok(home)
 }
